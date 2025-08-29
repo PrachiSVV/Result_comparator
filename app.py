@@ -260,27 +260,34 @@ fig_actual_vs_expected.update_layout(
 )
 st.plotly_chart(fig_actual_vs_expected, use_container_width=True)
 
-# ---- NEW: Beat / Inline / Miss % by metric (across brokers) ----
-st.markdown("### 📊 Beat / Inline / Miss % — grouped by **metric** (all brokers)")
+# --- Beat values by metric (as given) ---
+# ==============================
+st.markdown("### 📊 Beat values (as % vs expectation) — grouped by metric")
 
-flag_pct_df = build_flag_percent_df(cmp)
-fig_flag_pct = px.bar(
-    flag_pct_df,
+beat_long = cmp.melt(
+    id_vars=["broker_name"],
+    value_vars=["sales_beat", "ebitda_beat", "pat_beat"],
+    var_name="metric",
+    value_name="percent_value"
+)
+
+fig_beats = px.bar(
+    beat_long,
     x="metric",
-    y="percent",
-    color="status",
+    y="percent_value",
+    color="broker_name",
     barmode="group",
-    category_orders={"metric": ["sales","ebitda","pat"], "status": STATUS_ORDER},
-    title=f"{sel_symbol}: Beat / Inline / Miss (%) by metric",
-    hover_data={"percent":":.2f","status":True,"metric":True,"count":":d","total":":d"},
+    title=f"{sel_symbol}: Beat values (already % in data)",
+    category_orders={"metric": ["sales_beat","ebitda_beat","pat_beat"]},
+    hover_data={"broker_name":True,"percent_value":":.2f"}
 )
-fig_flag_pct.update_layout(
+fig_beats.update_layout(
     xaxis_title="Metric",
-    yaxis_title="Percent of broker rows",
-    legend_title="",
-    margin=dict(t=60, r=10, l=10, b=10),
+    yaxis_title="Beat value (%)",
+    legend_title="Broker"
 )
-st.plotly_chart(fig_flag_pct, use_container_width=True)
+st.plotly_chart(fig_beats, use_container_width=True)
+
 
 # ==============================
 # --------- TABS ---------------
@@ -319,3 +326,4 @@ with tab2:
 
 # Footer
 st.caption("Built for clarity: Actual vs expected, plus Beat/Inline/Miss distribution, with login & schema validation.")
+
