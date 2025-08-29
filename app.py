@@ -149,15 +149,31 @@ st.markdown(
 # ==============================
 # ---------- INPUT -------------
 # ==============================
-st.caption("Upload your CSV (schema validated).")
-file = st.file_uploader("Upload CSV", type=["csv"], label_visibility="collapsed")
-if file is None:
-    with st.expander("ℹ️ CSV schema & tips", expanded=False):
-        st.code(", ".join(REQUIRED_COLS), language="text")
-        st.info("Numeric columns will be auto-coerced. Invalid values become NaN.")
+# ---------------- Load from GitHub (public raw URL) ----------------
+@st.cache_data(show_spinner=False)
+def load_data_from_github_raw(raw_url: str) -> pd.DataFrame:
+    return pd.read_csv(raw_url)
+
+raw_url = st.secrets.get("data", {}).get("url")
+if not raw_url:
+    st.error("Missing data.url in secrets. Add your raw GitHub CSV URL under [data].")
     st.stop()
 
-df = read_csv(file)
+try:
+    df = load_data_from_github_raw(raw_url)
+except Exception as e:
+    st.error(f"Failed to load CSV from GitHub raw URL.\n{e}")
+    st.stop()
+
+# st.caption("Upload your CSV (schema validated).")
+# file = st.file_uploader("Upload CSV", type=["csv"], label_visibility="collapsed")
+# if file is None:
+#     with st.expander("ℹ️ CSV schema & tips", expanded=False):
+#         st.code(", ".join(REQUIRED_COLS), language="text")
+#         st.info("Numeric columns will be auto-coerced. Invalid values become NaN.")
+#     st.stop()
+
+# df = read_csv(file)
 validate_schema(df)
 df = coerce_numeric(df)
 
@@ -326,4 +342,5 @@ with tab2:
 
 # Footer
 st.caption("Built for clarity: Actual vs expected, plus Beat/Inline/Miss distribution, with login & schema validation.")
+
 
